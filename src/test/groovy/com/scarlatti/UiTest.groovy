@@ -35,7 +35,7 @@ class UiTest {
     @Test
     void buildSwTable() {
         UserProperties.SwTable table = new UserProperties.SwTable({
-            it.tr(new UserProperties.Tr({
+            it.tr(new UserProperties.Tr("1", {
                 it.td(new UserProperties.Td(
                     new UserProperties.SwLabel("name")
                 ))
@@ -49,5 +49,7 @@ class UiTest {
         })
 
         JOptionPane.showMessageDialog(null, table.render())
+
+        println "value is now: " + table.getTrs().get(0).getTds().get(1).getUi().getValue()
     }
 }

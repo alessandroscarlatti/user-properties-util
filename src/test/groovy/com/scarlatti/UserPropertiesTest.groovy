@@ -1,8 +1,10 @@
 package com.scarlatti
 
+import com.sun.java.swing.plaf.windows.WindowsLookAndFeel
 import org.junit.Before
 import org.junit.Test
 
+import javax.swing.UIManager
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -22,6 +24,7 @@ class UserPropertiesTest {
         Files.createDirectories(Paths.get("build/sandbox"))
         file = new File("build/sandbox/test.properties")
         file.text = ""
+        UIManager.setLookAndFeel(new WindowsLookAndFeel())
     }
 
     @Test
@@ -82,5 +85,16 @@ class UserPropertiesTest {
             prop3=you
             prop4=know
         """.stripIndent().trim()
+    }
+
+    @Test
+    void "prompt for properties"() {
+        UserProperties props1 = new UserProperties(file, {
+            it.def("prop1", "the first", false)
+            it.def("prop2", "the second", false)
+            it.def("prop3", "the password", true)
+        })
+
+        println "done"
     }
 }

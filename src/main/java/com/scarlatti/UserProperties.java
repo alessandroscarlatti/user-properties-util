@@ -5,15 +5,13 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static java.util.Base64.getDecoder;
 import static java.util.Base64.getEncoder;
+import static java.util.stream.Collectors.toList;
 
 /**
  * ______    __                         __           ____             __     __  __  _
@@ -71,16 +69,16 @@ public class UserProperties extends Properties {
 
         if (file.exists()) {
             // load from file
-            try(FileInputStream fis = new FileInputStream(file)) {
+            try (FileInputStream fis = new FileInputStream(file)) {
                 load(fis);
             } catch (Exception e) {
                 throw new RuntimeException("Error loading properties from file " + file, e);
             }
-        }
-        else {
+        } else {
             // create an empty file
             try {
                 Files.write(file.toPath(), "".getBytes());
+                promptForMissingProperties();
             } catch (IOException e) {
                 throw new RuntimeException("Error creating properties file " + file, e);
             }
@@ -88,7 +86,7 @@ public class UserProperties extends Properties {
     }
 
     public void load(String properties) {
-        try(StringReader reader = new StringReader(properties)) {
+        try (StringReader reader = new StringReader(properties)) {
             load(reader);
         } catch (Exception e) {
             throw new RuntimeException("Error loading properties from string " + properties, e);
@@ -135,6 +133,21 @@ public class UserProperties extends Properties {
         }
 
         // build and show the dialog.
+        EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
+        JOptionPane.showOptionDialog(
+            null,
+            editPropertiesTable.render(),
+            "Edit Properties",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.INFORMATION_MESSAGE,
+            null,
+            new Object[]{"OK", "Cancel"},
+            "OK"
+        );
+
+        properties = editPropertiesTable.getProperties();
+
+        // update the properties...
     }
 
     private void decodeSecretProperties() {
@@ -269,27 +282,27 @@ public class UserProperties extends Properties {
         }
     }
 
-    private static class EditPropertiesPanel {
-        private JPanel jPanel;
+    private static class EditPropertiesTable {
+        private SwTable swTable;
+        private JComponent ui;
         private List<PropertyUiData> properties;
 
-        private EditPropertiesPanel(List<PropertyUiData> properties) {
+        private EditPropertiesTable(List<PropertyUiData> properties) {
             this.properties = properties;
             buildUi();
         }
 
         private void buildUi() {
-            SwTable ui = new SwTable(table -> {
+            swTable = new SwTable(table -> {
                 for (PropertyUiData property : properties) {
-                    table.tr(new Tr(tr -> {
+                    table.tr(new Tr(property.getPropertyDef().getName(), tr -> {
                         tr.td(new Td(new SwLabel(property.getPropertyDef().getName())));
 
                         final String text = property.getValue() != null ? property.getValue() : "";
                         if (property.getPropertyDef().getSecret()) {
-                            tr.td(new Td(new SwTextField(text)));
-                        }
-                        else {
                             tr.td(new Td(new SwPasswordField(text)));
+                        } else {
+                            tr.td(new Td(new SwTextField(text)));
                         }
 
                         tr.td(new Td(new SwLabel(property.getPropertyDef().getDescription())));
@@ -297,11 +310,27 @@ public class UserProperties extends Properties {
                 }
             });
 
-            jPanel.add(ui.render());
+            this.ui = swTable.render();
         }
 
-        public Component getUi() {
-            return jPanel;
+        public JComponent render() {
+            return ui;
+        }
+
+        public List<PropertyUiData> getProperties() {
+            // rebuild the properties from what was last in the ui
+            for (Tr tr : swTable.getTrs()) {
+                PropertyUiData property = properties.stream()
+                    .filter(p -> p.getPropertyDef().getName().equals(tr.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+                if (property != null) {
+                    property.setValue((String) tr.getTds().get(1).getUi().getValue());
+                }
+            }
+
+            return properties;
         }
     }
 
@@ -309,7 +338,8 @@ public class UserProperties extends Properties {
         private JTextField jLabel;
 
         public SwTextField(String text) {
-             jLabel = new JTextField(text);
+            jLabel = new JTextField(text);
+            jLabel.setBorder(null);
         }
 
         @Override
@@ -357,6 +387,7 @@ public class UserProperties extends Properties {
 
         public SwPasswordField(String text) {
             jPasswordField = new JPasswordField(text);
+            jPasswordField.setBorder(null);
         }
 
         @Override
@@ -378,18 +409,22 @@ public class UserProperties extends Properties {
     public static class SwTable {
         private List<Tr> trs = new ArrayList<>();
         private JScrollPane jScrollPane = new JScrollPane();
-        private JTable jTable = new JTable();
+        private JTable jTable;
         private DefaultTableModel model;
 
         public SwTable(Consumer<SwTable> config) {
             config.accept(this);
             setupTableRendering();
-            addData();
+//            addData();
             updateRowHeights();
         }
 
         public void tr(Tr tr) {
             trs.add(tr);
+        }
+
+        public List<Tr> getTrs() {
+            return trs;
         }
 
         public JComponent render() {
@@ -400,40 +435,42 @@ public class UserProperties extends Properties {
 
         private void setupTableRendering() {
 
-            model = new DefaultTableModel(0, 4) {
-                // all columns are strings.
-                @Override
-                public Class<?> getColumnClass(int columnIndex) {
-                    return String.class;
-                }
+            Object[][] data = new Object[trs.size()][trs.size() == 0 ? 0 : trs.get(0).getTds().size()];
+            List<List<DefaultCellEditor>> cellEditors = new ArrayList<>();
 
-                // all cells are editable.
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return true;
-                }
-            };
-            jTable.setModel(model);
-
-            TableColumnModel columnModel = new DefaultTableColumnModel();
-
-            int clmIndex = 0;
+            int trIndex = 0;
             for (Tr tr : trs) {
-                for (Td td : tr.tds) {
-                    CstmCompRenderer renderer = new CstmCompRenderer(td.ui);
-                    TableColumn tableColumn = new TableColumn(clmIndex);
-                    tableColumn.setCellRenderer(renderer);
-                    tableColumn.setCellEditor(renderer);
-                    columnModel.addColumn(tableColumn);
-                    columnModel.getColumn(clmIndex).setHeaderValue("header");
-                    // paramNames.put(param.getId(), clmIndex);
-                    clmIndex++;
-                }
+                data[trIndex] = tr.getTds().stream()
+                    .map(td -> td.getUi().getValue()).toArray();
+
+                List<DefaultCellEditor> cellEditorsForRow = tr.getTds().stream()
+                    .map(td -> new CstmCompEditor(td.getUi()))
+                    .collect(toList());
+                cellEditors.add(cellEditorsForRow);
+                trIndex++;
             }
 
-            jTable.setColumnModel(columnModel);
+            String[] columnNames = new String[]{"Property Name", "Value", "Description"};
+            model = new DefaultTableModel(data, columnNames);
+
+            jTable = new JTable(model) {
+                @Override
+                public TableCellEditor getCellEditor(int row, int column) {
+                    int modelRow = convertRowIndexToModel(row);
+                    int modelColumn = convertColumnIndexToModel(column);
+                    return cellEditors.get(modelRow).get(modelColumn);
+                }
+
+                @Override
+                public TableCellRenderer getCellRenderer(int row, int column) {
+                    int modelRow = convertRowIndexToModel(row);
+                    int modelColumn = convertColumnIndexToModel(column);
+                    return (TableCellRenderer) cellEditors.get(modelRow).get(modelColumn);
+                }
+            };
+
             jTable.putClientProperty("terminateEditOnFocusLost", true);
-            jTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            jTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
 
         private void addData() {
@@ -452,12 +489,10 @@ public class UserProperties extends Properties {
         }
 
         private void updateRowHeights() {
-            for (int row = 0; row < jTable.getRowCount(); row++)
-            {
+            for (int row = 0; row < jTable.getRowCount(); row++) {
                 int rowHeight = jTable.getRowHeight();
 
-                for (int column = 0; column < jTable.getColumnCount(); column++)
-                {
+                for (int column = 0; column < jTable.getColumnCount(); column++) {
                     Component comp = jTable.prepareRenderer(jTable.getCellRenderer(row, column), row, column);
                     rowHeight = Math.max(rowHeight, comp.getPreferredSize().height);
                 }
@@ -469,13 +504,23 @@ public class UserProperties extends Properties {
 
     public static class Tr {
         private List<Td> tds = new ArrayList<>();
+        private String id;
 
-        Tr(Consumer<Tr> config) {
+        Tr(String id, Consumer<Tr> config) {
+            this.id = id;
             config.accept(this);
         }
 
         void td(Td td) {
             tds.add(td);
+        }
+
+        public List<Td> getTds() {
+            return tds;
+        }
+
+        public String getId() {
+            return id;
         }
     }
 
@@ -485,19 +530,25 @@ public class UserProperties extends Properties {
         public Td(CellUiComp ui) {
             this.ui = ui;
         }
+
+        public CellUiComp getUi() {
+            return ui;
+        }
     }
 
     private interface CellUiComp<T> {
         T getValue();
+
         void setValue(T value);
+
         JComponent getUi();
     }
 
-    private static class CstmCompRenderer extends DefaultCellEditor implements TableCellRenderer {
+    private static class CstmCompEditor extends DefaultCellEditor implements TableCellRenderer {
         private JComponent ui;
         private CellUiComp uiComponent;
 
-        public CstmCompRenderer(CellUiComp uiComponent) {
+        public CstmCompEditor(CellUiComp uiComponent) {
             super(new JTextField());
             this.uiComponent = uiComponent;
             ui = uiComponent.getUi();
@@ -508,8 +559,8 @@ public class UserProperties extends Properties {
         public Component getTableCellEditorComponent(JTable table, Object value,
                                                      boolean isSelected, int row, int column) {
             if (isSelected) {
-                ui.setForeground(table.getSelectionForeground());
-                ui.setBackground(table.getSelectionBackground());
+                ui.setForeground(table.getForeground());
+                ui.setBackground(table.getBackground());
             } else {
                 ui.setForeground(table.getForeground());
                 ui.setBackground(table.getBackground());
@@ -522,8 +573,8 @@ public class UserProperties extends Properties {
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             if (isSelected) {
-                ui.setForeground(table.getSelectionForeground());
-                ui.setBackground(table.getSelectionBackground());
+                ui.setForeground(table.getForeground());
+                ui.setBackground(table.getBackground());
             } else {
                 ui.setForeground(table.getForeground());
                 ui.setBackground(UIManager.getColor("Button.background"));
