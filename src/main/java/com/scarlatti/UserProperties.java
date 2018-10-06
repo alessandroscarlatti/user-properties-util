@@ -282,20 +282,22 @@ public class UserProperties extends Properties {
             SwTable ui = new SwTable(table -> {
                 for (PropertyUiData property : properties) {
                     table.tr(new Tr(tr -> {
-                        tr.td(new Td(() -> new JLabel(property.getPropertyDef().getName())));
+                        tr.td(new Td(new SwLabel(property.getPropertyDef().getName())));
 
                         final String text = property.getValue() != null ? property.getValue() : "";
                         if (property.getPropertyDef().getSecret()) {
-                            tr.td(new Td(() -> new JTextField(text)));
+                            tr.td(new Td(new SwTextField(text)));
                         }
                         else {
-                            tr.td(new Td(() -> new JPasswordField(text)));
+                            tr.td(new Td(new SwPasswordField(text)));
                         }
 
-                        tr.td(new Td(() -> new JLabel(property.getPropertyDef().getDescription())));
+                        tr.td(new Td(new SwLabel(property.getPropertyDef().getDescription())));
                     }));
                 }
             });
+
+            jPanel.add(ui.render());
         }
 
         public Component getUi() {
@@ -303,26 +305,97 @@ public class UserProperties extends Properties {
         }
     }
 
+    public static class SwTextField implements CellUiComp<String> {
+        private JTextField jLabel;
+
+        public SwTextField(String text) {
+             jLabel = new JTextField(text);
+        }
+
+        @Override
+        public String getValue() {
+            return jLabel.getText();
+        }
+
+        @Override
+        public void setValue(String value) {
+            jLabel.setText(value);
+        }
+
+        @Override
+        public JComponent getUi() {
+            return jLabel;
+        }
+    }
+
+    public static class SwLabel implements CellUiComp<String> {
+        private JLabel jLabel;
+
+        public SwLabel(String text) {
+            jLabel = new JLabel(text);
+        }
+
+        @Override
+        public String getValue() {
+            return jLabel.getText();
+        }
+
+        @Override
+        public void setValue(String value) {
+            jLabel.setText(value);
+        }
+
+        @Override
+        public JComponent getUi() {
+            return jLabel;
+        }
+    }
+
+
+    private static class SwPasswordField implements CellUiComp<String> {
+        private JPasswordField jPasswordField;
+
+        public SwPasswordField(String text) {
+            jPasswordField = new JPasswordField(text);
+        }
+
+        @Override
+        public String getValue() {
+            return jPasswordField.getText();
+        }
+
+        @Override
+        public void setValue(String value) {
+            jPasswordField.setText(value);
+        }
+
+        @Override
+        public JComponent getUi() {
+            return jPasswordField;
+        }
+    }
+
     public static class SwTable {
-        private List<Tr> trs;
-        private JTable jTable;
+        private List<Tr> trs = new ArrayList<>();
+        private JScrollPane jScrollPane = new JScrollPane();
+        private JTable jTable = new JTable();
         private DefaultTableModel model;
 
         public SwTable(Consumer<SwTable> config) {
             config.accept(this);
+            setupTableRendering();
+            addData();
+            updateRowHeights();
         }
 
         public void tr(Tr tr) {
             trs.add(tr);
         }
 
-        public JTable render() {
-            jTable = new JTable();
+        public JComponent render() {
+            jScrollPane.setViewportView(jTable);
 
-
-
-
-            return jTable;
+            return jScrollPane;
         }
 
         private void setupTableRendering() {
@@ -345,41 +418,15 @@ public class UserProperties extends Properties {
             TableColumnModel columnModel = new DefaultTableColumnModel();
 
             int clmIndex = 0;
-
             for (Tr tr : trs) {
                 for (Td td : tr.tds) {
-                    CellUiComp cellUiComp = new CellUiComp() {
-                        @Override
-                        public void setValue(Object value) {
-
-                        }
-
-                        @Override
-                        public JComponent getUi() {
-                            return null;
-                        }
-                    }
-                }
-            }
-
-
-
-
-            for (EnumConstructor constructor : constructors) {
-                for (EnumConstructorParam param : constructor.getParams()) {
-
-                    if (paramNames.containsKey(param.getId()))
-                        continue;
-
-                    CellUiComp uiComponent = new TwoButtonCellRenderer();
-                    CstmCompRenderer renderer = new CstmCompRenderer(uiComponent);
-
+                    CstmCompRenderer renderer = new CstmCompRenderer(td.ui);
                     TableColumn tableColumn = new TableColumn(clmIndex);
                     tableColumn.setCellRenderer(renderer);
                     tableColumn.setCellEditor(renderer);
                     columnModel.addColumn(tableColumn);
-                    columnModel.getColumn(clmIndex).setHeaderValue(param.getId());
-                    paramNames.put(param.getId(), clmIndex);
+                    columnModel.getColumn(clmIndex).setHeaderValue("header");
+                    // paramNames.put(param.getId(), clmIndex);
                     clmIndex++;
                 }
             }
@@ -389,11 +436,39 @@ public class UserProperties extends Properties {
             jTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         }
 
+        private void addData() {
+            for (Tr tr : trs) {
+                // this is the data for the row...
+                Object[] values = new Object[tr.tds.size()];
 
+                int clmIndex = 0;
+                for (Td td : tr.tds) {
+                    values[clmIndex] = td.ui.getValue();
+                    clmIndex++;
+                }
+
+                model.addRow(values);
+            }
+        }
+
+        private void updateRowHeights() {
+            for (int row = 0; row < jTable.getRowCount(); row++)
+            {
+                int rowHeight = jTable.getRowHeight();
+
+                for (int column = 0; column < jTable.getColumnCount(); column++)
+                {
+                    Component comp = jTable.prepareRenderer(jTable.getCellRenderer(row, column), row, column);
+                    rowHeight = Math.max(rowHeight, comp.getPreferredSize().height);
+                }
+
+                jTable.setRowHeight(row, rowHeight);
+            }
+        }
     }
 
     public static class Tr {
-        private List<Td> tds;
+        private List<Td> tds = new ArrayList<>();
 
         Tr(Consumer<Tr> config) {
             config.accept(this);
@@ -405,9 +480,9 @@ public class UserProperties extends Properties {
     }
 
     public static class Td {
-        private Supplier<Component> ui;
+        private CellUiComp ui;
 
-        public Td(Supplier<Component> ui) {
+        public Td(CellUiComp ui) {
             this.ui = ui;
         }
     }
@@ -419,7 +494,7 @@ public class UserProperties extends Properties {
     }
 
     private static class CstmCompRenderer extends DefaultCellEditor implements TableCellRenderer {
-        protected JComponent ui;
+        private JComponent ui;
         private CellUiComp uiComponent;
 
         public CstmCompRenderer(CellUiComp uiComponent) {

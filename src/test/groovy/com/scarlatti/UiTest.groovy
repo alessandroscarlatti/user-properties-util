@@ -34,18 +34,20 @@ class UiTest {
 
     @Test
     void buildSwTable() {
-        new UserProperties.SwTable({
+        UserProperties.SwTable table = new UserProperties.SwTable({
             it.tr(new UserProperties.Tr({
-                it.td(new UserProperties.Td({
-                    new JLabel("stuff1")
-                }))
-                it.td(new UserProperties.Td({
-                    new JLabel("stuff2")
-                }))
-                it.td(new UserProperties.Td({
-                    new JLabel("stuff3")
-                }))
+                it.td(new UserProperties.Td(
+                    new UserProperties.SwLabel("name")
+                ))
+                it.td(new UserProperties.Td(
+                    new UserProperties.SwTextField("value")
+                ))
+                it.td(new UserProperties.Td(
+                    new UserProperties.SwLabel("description")
+                ))
             }))
         })
+
+        JOptionPane.showMessageDialog(null, table.render())
     }
 }
