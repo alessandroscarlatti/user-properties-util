@@ -46,7 +46,7 @@ class UserPropertiesTest {
     @Test
     void "save properties to file"() {
         UserProperties props1 = new UserProperties(properties())
-        props1.setProperty("key", "value")
+        props1.setProperty("key", "getValue")
 
         assert props1.size() == 5
         props1.store(file)
