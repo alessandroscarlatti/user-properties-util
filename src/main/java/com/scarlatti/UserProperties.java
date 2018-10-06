@@ -96,15 +96,15 @@ public class UserProperties extends Properties {
     @Override
     public synchronized void load(Reader reader) throws IOException {
         super.load(reader);
-        promptForMissingProperties();
         decodeSecretProperties();
+        promptForMissingProperties();
     }
 
     @Override
     public synchronized void load(InputStream inStream) throws IOException {
         super.load(inStream);
-        promptForMissingProperties();
         decodeSecretProperties();
+        promptForMissingProperties();
     }
 
     private void promptForMissingProperties() {
@@ -148,6 +148,9 @@ public class UserProperties extends Properties {
         properties = editPropertiesTable.getProperties();
 
         // update the properties...
+        for (PropertyUiData property : properties) {
+            setProperty(property.getPropertyDef().getName(), property.value);
+        }
     }
 
     private void decodeSecretProperties() {
@@ -320,14 +323,11 @@ public class UserProperties extends Properties {
         public List<PropertyUiData> getProperties() {
             // rebuild the properties from what was last in the ui
             for (Tr tr : swTable.getTrs()) {
-                PropertyUiData property = properties.stream()
+                properties.stream()
                     .filter(p -> p.getPropertyDef().getName().equals(tr.getId()))
                     .findFirst()
-                    .orElse(null);
+                    .ifPresent(property -> property.setValue((String) tr.getTds().get(1).getUi().getValue()));
 
-                if (property != null) {
-                    property.setValue((String) tr.getTds().get(1).getUi().getValue());
-                }
             }
 
             return properties;

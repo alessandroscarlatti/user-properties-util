@@ -88,13 +88,39 @@ class UserPropertiesTest {
     }
 
     @Test
-    void "prompt for properties"() {
+    void "prompt for properties when missing a property in the file"() {
+
+        file.text = properties()
+
         UserProperties props1 = new UserProperties(file, {
             it.def("prop1", "the first", false)
             it.def("prop2", "the second", false)
             it.def("prop3", "the password", true)
+            it.def("prop4", "the password2", true)
+            it.def("prop5", "the password3", true)
         })
 
         println "done"
+        props1.store(file)
+    }
+
+    @Test
+    void "prompt for properties when file is empty"() {
+        UserProperties props1 = new UserProperties(file, {
+            it.def("prop1", "the first", false)
+            it.def("prop2", "the second", false)
+            it.def("prop3", "the password", true)
+            it.def("prop4", "the password2", true)
+            it.def("prop5", "the password3", true)
+        })
+
+        println "done"
+        props1.store(file)
+
+        // todo this saving should probably be done automatically!
+        // That way, we're just using the properties.
+        // We assume they are persisted.
+        // Of course we can change them manually afterward
+        // and persist those changes as well.
     }
 }
