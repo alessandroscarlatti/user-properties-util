@@ -22,7 +22,7 @@ import static javax.swing.JOptionPane.OK_OPTION;
  * /_/ |_/_/\__/___/___/\_,_/_//_/\_,_/_/  \___/ /___/\__/\_,_/_/ /_/\_,_/\__/\__/_/
  * Friday, 10/5/2018
  */
-public class InteractiveProperties extends Properties {
+public class SmartProperties extends Properties {
 
     // property definitions are optional.
     // if we read without definitions we will get the raw values.
@@ -33,17 +33,25 @@ public class InteractiveProperties extends Properties {
     private boolean promptForMissingProperties = true;
     private File file;
 
-    public InteractiveProperties() {
+    static {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    public InteractiveProperties(String properties) {
+    public SmartProperties() {
+    }
+
+    public SmartProperties(String properties) {
         load(properties);
     }
 
-    public InteractiveProperties(Properties defaults,
-                                 File file,
-                                 boolean promptForMissingProperties,
-                                 List<PropertyDef> propertyDefs) {
+    public SmartProperties(Properties defaults,
+                           File file,
+                           boolean promptForMissingProperties,
+                           List<PropertyDef> propertyDefs) {
         super(defaults);
         this.file = file;
         this.promptForMissingProperties = promptForMissingProperties;
@@ -51,16 +59,16 @@ public class InteractiveProperties extends Properties {
         load(file);
     }
 
-    public InteractiveProperties(File file) {
+    public SmartProperties(File file) {
         load(file);
     }
 
-    public InteractiveProperties(File file, Consumer<InteractiveProperties> config) {
+    public SmartProperties(File file, Consumer<SmartProperties> config) {
         config.accept(this);
         load(file);
     }
 
-    public InteractiveProperties(Properties defaults) {
+    public SmartProperties(Properties defaults) {
         super(defaults);
     }
 
@@ -69,11 +77,11 @@ public class InteractiveProperties extends Properties {
         return builder;
     }
 
-    public InteractiveProperties def(String name, String description, boolean secret) {
+    public SmartProperties def(String name, String description, boolean secret) {
         return def(new PropertyDef(name, description, secret));
     }
 
-    public InteractiveProperties def(PropertyDef propertyDef) {
+    public SmartProperties def(PropertyDef propertyDef) {
         propertyDefs.add(propertyDef);
         return this;
     }
@@ -81,21 +89,24 @@ public class InteractiveProperties extends Properties {
     public void load(File file) {
         Objects.requireNonNull(file, "File may not be null");
 
+        System.out.println("Reading properties from file " + file.getAbsolutePath() + " (delete this file to reset)");
+
         if (file.exists()) {
             // load from file
             try (FileInputStream fis = new FileInputStream(file)) {
                 this.file = file;
                 load(fis);
             } catch (Exception e) {
-                throw new RuntimeException("Error loading properties from file " + file, e);
+                throw new RuntimeException("Error loading properties from file " + file.getAbsolutePath(), e);
             }
         } else {
             // create an empty file
             try {
+                System.out.println(file.getAbsoluteFile() + " does not exist (creating file)");
                 Files.write(file.toPath(), "".getBytes());
                 promptForMissingProperties();
             } catch (IOException e) {
-                throw new RuntimeException("Error creating properties file " + file, e);
+                throw new RuntimeException("Error creating properties file " + file.getAbsolutePath(), e);
             }
         }
     }
@@ -659,8 +670,8 @@ public class InteractiveProperties extends Properties {
         private boolean promptForMissingProperties = true;
         private List<PropertyDef> propertyDefs = new ArrayList<>();
 
-        public InteractiveProperties fromFile(File file) {
-            return new InteractiveProperties(
+        public SmartProperties fromFile(File file) {
+            return new SmartProperties(
                 defaults,
                 file,
                 promptForMissingProperties,

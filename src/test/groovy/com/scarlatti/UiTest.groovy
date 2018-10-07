@@ -1,7 +1,5 @@
 package com.scarlatti
 
-import com.sun.java.swing.plaf.windows.WindowsLookAndFeel
-import org.junit.Before
 import org.junit.Test
 
 import javax.swing.*
@@ -14,11 +12,6 @@ import javax.swing.*
  * Saturday, 10/6/2018
  */
 class UiTest {
-
-    @Before
-    void setup() {
-        UIManager.setLookAndFeel(new WindowsLookAndFeel())
-    }
 
     @Test
     void testRenderJPanel() {
@@ -34,16 +27,16 @@ class UiTest {
 
     @Test
     void buildSwTable() {
-        InteractiveProperties.SwTable table = new InteractiveProperties.SwTable({
-            it.tr(new InteractiveProperties.Tr("1", {
-                it.td(new InteractiveProperties.Td(
-                    new InteractiveProperties.SwLabel("name")
+        SmartProperties.SwTable table = new SmartProperties.SwTable({
+            it.tr(new SmartProperties.Tr("1", {
+                it.td(new SmartProperties.Td(
+                    new SmartProperties.SwLabel("name")
                 ))
-                it.td(new InteractiveProperties.Td(
-                    new InteractiveProperties.SwTextField("value")
+                it.td(new SmartProperties.Td(
+                    new SmartProperties.SwTextField("value")
                 ))
-                it.td(new InteractiveProperties.Td(
-                    new InteractiveProperties.SwLabel("description")
+                it.td(new SmartProperties.Td(
+                    new SmartProperties.SwLabel("description")
                 ))
             }))
         })

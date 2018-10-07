@@ -15,7 +15,7 @@ import java.nio.file.Paths
  * /_/ |_/_/\__/___/___/\_,_/_//_/\_,_/_/  \___/ /___/\__/\_,_/_/ /_/\_,_/\__/\__/_/
  * Friday, 10/5/2018
  */
-class InteractivePropertiesTest {
+class SmartPropertiesTest {
 
     File file
 
@@ -24,36 +24,35 @@ class InteractivePropertiesTest {
         Files.createDirectories(Paths.get("build/sandbox"))
         file = new File("build/sandbox/test.properties")
         file.text = ""
-        UIManager.setLookAndFeel(new WindowsLookAndFeel())
     }
 
     @Test
     void "load properties from string"() {
-        InteractiveProperties props = new InteractiveProperties()
+        SmartProperties props = new SmartProperties()
         props.load(properties())
         assert props.size() == 4
     }
 
     @Test
     void "load properties from string via constructor"() {
-        InteractiveProperties props = new InteractiveProperties(properties())
+        SmartProperties props = new SmartProperties(properties())
         assert props.size() == 4
     }
 
     @Test
     void "load properties from file via constructor"() {
-        InteractiveProperties props = new InteractiveProperties(file)
+        SmartProperties props = new SmartProperties(file)
         assert props.size() == 4
     }
 
     @Test
     void "save properties to file"() {
-        InteractiveProperties props1 = new InteractiveProperties(properties())
+        SmartProperties props1 = new SmartProperties(properties())
         props1.setProperty("key", "getValue")
 
         assert props1.size() == 5
         props1.store(file)
-        InteractiveProperties props2 = new InteractiveProperties(file)
+        SmartProperties props2 = new SmartProperties(file)
         assert props2.size() == 5
 
         assert props1 == props2
@@ -61,16 +60,16 @@ class InteractivePropertiesTest {
 
     @Test
     void "serialize secret properties"() {
-        InteractiveProperties props1 = new InteractiveProperties(properties())
+        SmartProperties props1 = new SmartProperties(properties())
                 .def("prop1", "the first", true)
 
         props1.store(file)
 
-        Properties props2 = new InteractiveProperties(file)
+        Properties props2 = new SmartProperties(file)
         assert props2.getProperty("prop1") != null
         assert props2.getProperty("prop1") != props1.getProperty("prop1")
 
-        Properties props3 = new InteractiveProperties(file, {
+        Properties props3 = new SmartProperties(file, {
             it.def("prop1", "the first", true)
         })
 
@@ -92,7 +91,7 @@ class InteractivePropertiesTest {
 
         file.text = properties()
 
-        InteractiveProperties props1 = new InteractiveProperties(file, {
+        SmartProperties props1 = new SmartProperties(file, {
             it.def("prop1", "the first", false)
             it.def("prop2", "the second", false)
             it.def("prop3", "the password", true)
@@ -106,7 +105,7 @@ class InteractivePropertiesTest {
 
     @Test
     void "prompt for properties when file is empty"() {
-        InteractiveProperties props1 = new InteractiveProperties(file, {
+        SmartProperties props1 = new SmartProperties(file, {
             it.def("prop1", "the first", false)
             it.def("prop2", "the second", false)
             it.def("prop3", "the password", true)
@@ -127,7 +126,7 @@ class InteractivePropertiesTest {
     @Test
     void "use properties builder"() {
         file.text = properties()
-        Properties properties = InteractiveProperties.get()
+        Properties properties = SmartProperties.get()
             .property("prop1", "a very very very very very very long description very very very long description")
             .property("prop2", "the short")
             .property("prop3", "the remarkable property")
@@ -151,9 +150,19 @@ class InteractivePropertiesTest {
     }
 
     @Test
-    void "get one properties"() {
+    void "get one property"() {
         file.text = properties()
-        Properties properties = InteractiveProperties.get()
+        Properties properties = SmartProperties.get()
+                .secretProperty("sys.test.password", "your password")
+                .fromFile(file)
+
+        properties.prop1 != null
+    }
+
+    @Test
+    void "get one property when missing file"() {
+        file.delete()
+        Properties properties = SmartProperties.get()
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
 
@@ -163,7 +172,7 @@ class InteractivePropertiesTest {
     @Test
     void "get two properties"() {
         file.text = properties()
-        Properties properties = InteractiveProperties.get()
+        Properties properties = SmartProperties.get()
                 .property("sys.test.username", "your username")
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
