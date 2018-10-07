@@ -458,7 +458,6 @@ public class SmartProperties extends Properties {
             caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
             jScrollPane.setPreferredSize(new Dimension(0, 55));
-            jTextArea.setRows(jTextArea.getLineCount());
             jTextArea.setBorder(null);
             jScrollPane.setViewportView(jTextArea);
         }
