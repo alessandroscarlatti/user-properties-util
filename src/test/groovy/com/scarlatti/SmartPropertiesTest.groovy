@@ -1,10 +1,8 @@
 package com.scarlatti
 
-import com.sun.java.swing.plaf.windows.WindowsLookAndFeel
 import org.junit.Before
 import org.junit.Test
 
-import javax.swing.UIManager
 import java.nio.file.Files
 import java.nio.file.Paths
 
