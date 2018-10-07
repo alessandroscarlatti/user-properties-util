@@ -34,16 +34,16 @@ class UiTest {
 
     @Test
     void buildSwTable() {
-        UserProperties.SwTable table = new UserProperties.SwTable({
-            it.tr(new UserProperties.Tr("1", {
-                it.td(new UserProperties.Td(
-                    new UserProperties.SwLabel("name")
+        InteractiveProperties.SwTable table = new InteractiveProperties.SwTable({
+            it.tr(new InteractiveProperties.Tr("1", {
+                it.td(new InteractiveProperties.Td(
+                    new InteractiveProperties.SwLabel("name")
                 ))
-                it.td(new UserProperties.Td(
-                    new UserProperties.SwTextField("value")
+                it.td(new InteractiveProperties.Td(
+                    new InteractiveProperties.SwTextField("value")
                 ))
-                it.td(new UserProperties.Td(
-                    new UserProperties.SwLabel("description")
+                it.td(new InteractiveProperties.Td(
+                    new InteractiveProperties.SwLabel("description")
                 ))
             }))
         })

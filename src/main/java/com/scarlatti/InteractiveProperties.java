@@ -1,7 +1,5 @@
 package com.scarlatti;
 
-import javafx.scene.text.FontBuilder;
-
 import javax.swing.*;
 import javax.swing.table.*;
 import javax.swing.text.DefaultCaret;
@@ -24,7 +22,7 @@ import static javax.swing.JOptionPane.OK_OPTION;
  * /_/ |_/_/\__/___/___/\_,_/_//_/\_,_/_/  \___/ /___/\__/\_,_/_/ /_/\_,_/\__/\__/_/
  * Friday, 10/5/2018
  */
-public class UserProperties extends Properties {
+public class InteractiveProperties extends Properties {
 
     // property definitions are optional.
     // if we read without definitions we will get the raw values.
@@ -35,17 +33,17 @@ public class UserProperties extends Properties {
     private boolean promptForMissingProperties = true;
     private File file;
 
-    public UserProperties() {
+    public InteractiveProperties() {
     }
 
-    public UserProperties(String properties) {
+    public InteractiveProperties(String properties) {
         load(properties);
     }
 
-    public UserProperties(Properties defaults,
-                          File file,
-                          boolean promptForMissingProperties,
-                          List<PropertyDef> propertyDefs) {
+    public InteractiveProperties(Properties defaults,
+                                 File file,
+                                 boolean promptForMissingProperties,
+                                 List<PropertyDef> propertyDefs) {
         super(defaults);
         this.file = file;
         this.promptForMissingProperties = promptForMissingProperties;
@@ -53,16 +51,16 @@ public class UserProperties extends Properties {
         load(file);
     }
 
-    public UserProperties(File file) {
+    public InteractiveProperties(File file) {
         load(file);
     }
 
-    public UserProperties(File file, Consumer<UserProperties> config) {
+    public InteractiveProperties(File file, Consumer<InteractiveProperties> config) {
         config.accept(this);
         load(file);
     }
 
-    public UserProperties(Properties defaults) {
+    public InteractiveProperties(Properties defaults) {
         super(defaults);
     }
 
@@ -71,11 +69,11 @@ public class UserProperties extends Properties {
         return builder;
     }
 
-    public UserProperties def(String name, String description, boolean secret) {
+    public InteractiveProperties def(String name, String description, boolean secret) {
         return def(new PropertyDef(name, description, secret));
     }
 
-    public UserProperties def(PropertyDef propertyDef) {
+    public InteractiveProperties def(PropertyDef propertyDef) {
         propertyDefs.add(propertyDef);
         return this;
     }
@@ -661,8 +659,8 @@ public class UserProperties extends Properties {
         private boolean promptForMissingProperties = true;
         private List<PropertyDef> propertyDefs = new ArrayList<>();
 
-        public UserProperties fromFile(File file) {
-            return new UserProperties(
+        public InteractiveProperties fromFile(File file) {
+            return new InteractiveProperties(
                 defaults,
                 file,
                 promptForMissingProperties,

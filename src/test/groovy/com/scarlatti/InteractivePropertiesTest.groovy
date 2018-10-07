@@ -15,7 +15,7 @@ import java.nio.file.Paths
  * /_/ |_/_/\__/___/___/\_,_/_//_/\_,_/_/  \___/ /___/\__/\_,_/_/ /_/\_,_/\__/\__/_/
  * Friday, 10/5/2018
  */
-class UserPropertiesTest {
+class InteractivePropertiesTest {
 
     File file
 
@@ -29,31 +29,31 @@ class UserPropertiesTest {
 
     @Test
     void "load properties from string"() {
-        UserProperties props = new UserProperties()
+        InteractiveProperties props = new InteractiveProperties()
         props.load(properties())
         assert props.size() == 4
     }
 
     @Test
     void "load properties from string via constructor"() {
-        UserProperties props = new UserProperties(properties())
+        InteractiveProperties props = new InteractiveProperties(properties())
         assert props.size() == 4
     }
 
     @Test
     void "load properties from file via constructor"() {
-        UserProperties props = new UserProperties(file)
+        InteractiveProperties props = new InteractiveProperties(file)
         assert props.size() == 4
     }
 
     @Test
     void "save properties to file"() {
-        UserProperties props1 = new UserProperties(properties())
+        InteractiveProperties props1 = new InteractiveProperties(properties())
         props1.setProperty("key", "getValue")
 
         assert props1.size() == 5
         props1.store(file)
-        UserProperties props2 = new UserProperties(file)
+        InteractiveProperties props2 = new InteractiveProperties(file)
         assert props2.size() == 5
 
         assert props1 == props2
@@ -61,16 +61,16 @@ class UserPropertiesTest {
 
     @Test
     void "serialize secret properties"() {
-        UserProperties props1 = new UserProperties(properties())
+        InteractiveProperties props1 = new InteractiveProperties(properties())
                 .def("prop1", "the first", true)
 
         props1.store(file)
 
-        Properties props2 = new UserProperties(file)
+        Properties props2 = new InteractiveProperties(file)
         assert props2.getProperty("prop1") != null
         assert props2.getProperty("prop1") != props1.getProperty("prop1")
 
-        Properties props3 = new UserProperties(file, {
+        Properties props3 = new InteractiveProperties(file, {
             it.def("prop1", "the first", true)
         })
 
@@ -92,7 +92,7 @@ class UserPropertiesTest {
 
         file.text = properties()
 
-        UserProperties props1 = new UserProperties(file, {
+        InteractiveProperties props1 = new InteractiveProperties(file, {
             it.def("prop1", "the first", false)
             it.def("prop2", "the second", false)
             it.def("prop3", "the password", true)
@@ -106,7 +106,7 @@ class UserPropertiesTest {
 
     @Test
     void "prompt for properties when file is empty"() {
-        UserProperties props1 = new UserProperties(file, {
+        InteractiveProperties props1 = new InteractiveProperties(file, {
             it.def("prop1", "the first", false)
             it.def("prop2", "the second", false)
             it.def("prop3", "the password", true)
@@ -127,7 +127,7 @@ class UserPropertiesTest {
     @Test
     void "use properties builder"() {
         file.text = properties()
-        Properties properties = UserProperties.get()
+        Properties properties = InteractiveProperties.get()
             .property("prop1", "a very very very very very very long description very very very long description")
             .property("prop2", "the short")
             .property("prop3", "the remarkable property")
@@ -146,6 +146,27 @@ class UserPropertiesTest {
             .property("propi", "the remarkable property")
             .secretProperty("com.scarlatti.password", "the password")
             .fromFile(file)
+
+        properties.prop1 != null
+    }
+
+    @Test
+    void "get one properties"() {
+        file.text = properties()
+        Properties properties = InteractiveProperties.get()
+                .secretProperty("sys.test.password", "your password")
+                .fromFile(file)
+
+        properties.prop1 != null
+    }
+
+    @Test
+    void "get two properties"() {
+        file.text = properties()
+        Properties properties = InteractiveProperties.get()
+                .property("sys.test.username", "your username")
+                .secretProperty("sys.test.password", "your password")
+                .fromFile(file)
 
         properties.prop1 != null
     }
