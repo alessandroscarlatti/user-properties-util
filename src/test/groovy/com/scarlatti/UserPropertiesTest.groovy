@@ -115,12 +115,38 @@ class UserPropertiesTest {
         })
 
         println "done"
-        props1.store(file)
+//        props1.store(file)
 
         // todo this saving should probably be done automatically!
         // That way, we're just using the properties.
         // We assume they are persisted.
         // Of course we can change them manually afterward
         // and persist those changes as well.
+    }
+
+    @Test
+    void "use properties builder"() {
+        file.text = properties()
+        Properties properties = UserProperties.get()
+            .property("prop1", "a very very very very very very long description very very very long description")
+            .property("prop2", "the short")
+            .property("prop3", "the remarkable property")
+            .property("prop5", "the remarkable property")
+            .property("prop6", "password for the ftp server (this is your long password) and it ")
+            .property("prop7", "the remarkable property")
+            .property("prop8", "the remarkable property")
+            .property("prop9", "the remarkable property")
+            .property("prop0", "the remarkable property")
+            .property("propq", "the remarkable property")
+            .property("prope", "an example json string for example: qwerlkj asdfjkqwe radfkj qwer asdf")
+            .property("propr", "the remarkable property")
+            .property("propt", "the remarkable property")
+            .property("propy", "the remarkable property")
+            .property("propu", "the remarkable property")
+            .property("propi", "the remarkable property")
+            .secretProperty("com.scarlatti.password", "the password")
+            .fromFile(file)
+
+        properties.prop1 != null
     }
 }

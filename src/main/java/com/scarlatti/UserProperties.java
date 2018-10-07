@@ -1,7 +1,10 @@
 package com.scarlatti;
 
+import javafx.scene.text.FontBuilder;
+
 import javax.swing.*;
 import javax.swing.table.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
@@ -12,6 +15,7 @@ import java.util.function.Consumer;
 import static java.util.Base64.getDecoder;
 import static java.util.Base64.getEncoder;
 import static java.util.stream.Collectors.toList;
+import static javax.swing.JOptionPane.OK_OPTION;
 
 /**
  * ______    __                         __           ____             __     __  __  _
@@ -29,6 +33,7 @@ public class UserProperties extends Properties {
     // is actually the secret properties.
     private List<PropertyDef> propertyDefs = new ArrayList<>();
     private boolean promptForMissingProperties = true;
+    private File file;
 
     public UserProperties() {
     }
@@ -37,9 +42,15 @@ public class UserProperties extends Properties {
         load(properties);
     }
 
-    public UserProperties(String properties, Consumer<UserProperties> config) {
-        config.accept(this);
-        load(properties);
+    public UserProperties(Properties defaults,
+                          File file,
+                          boolean promptForMissingProperties,
+                          List<PropertyDef> propertyDefs) {
+        super(defaults);
+        this.file = file;
+        this.promptForMissingProperties = promptForMissingProperties;
+        this.propertyDefs = propertyDefs;
+        load(file);
     }
 
     public UserProperties(File file) {
@@ -53,6 +64,11 @@ public class UserProperties extends Properties {
 
     public UserProperties(Properties defaults) {
         super(defaults);
+    }
+
+    public static PropertiesBuilder get() {
+        PropertiesBuilder builder = new PropertiesBuilder();
+        return builder;
     }
 
     public UserProperties def(String name, String description, boolean secret) {
@@ -70,6 +86,7 @@ public class UserProperties extends Properties {
         if (file.exists()) {
             // load from file
             try (FileInputStream fis = new FileInputStream(file)) {
+                this.file = file;
                 load(fis);
             } catch (Exception e) {
                 throw new RuntimeException("Error loading properties from file " + file, e);
@@ -134,7 +151,9 @@ public class UserProperties extends Properties {
 
         // build and show the dialog.
         EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
-        JOptionPane.showOptionDialog(
+
+        System.out.println("Missing some properties.  Look for a dialog.");
+        int response = JOptionPane.showOptionDialog(
             null,
             editPropertiesTable.render(),
             "Edit Properties",
@@ -145,11 +164,18 @@ public class UserProperties extends Properties {
             "OK"
         );
 
-        properties = editPropertiesTable.getProperties();
+        if (response == OK_OPTION) {
+            properties = editPropertiesTable.getProperties();
 
-        // update the properties...
-        for (PropertyUiData property : properties) {
-            setProperty(property.getPropertyDef().getName(), property.value);
+            // update the properties...
+            for (PropertyUiData property : properties) {
+                setProperty(property.getPropertyDef().getName(), property.value);
+            }
+
+            // can we save the properties during load??
+            if (file != null) {
+                store(file);
+            }
         }
     }
 
@@ -308,7 +334,7 @@ public class UserProperties extends Properties {
                             tr.td(new Td(new SwTextField(text)));
                         }
 
-                        tr.td(new Td(new SwLabel(property.getPropertyDef().getDescription())));
+                        tr.td(new Td(new SwTextArea(property.getPropertyDef().getDescription())));
                     }));
                 }
             });
@@ -392,7 +418,7 @@ public class UserProperties extends Properties {
 
         @Override
         public String getValue() {
-            return jPasswordField.getText();
+            return new String(jPasswordField.getPassword());
         }
 
         @Override
@@ -403,6 +429,44 @@ public class UserProperties extends Properties {
         @Override
         public JComponent getUi() {
             return jPasswordField;
+        }
+    }
+
+    private static class SwTextArea implements CellUiComp<String> {
+        private JScrollPane jScrollPane = new JScrollPane();
+        private JTextArea jTextArea;
+
+        public SwTextArea(String text) {
+            jTextArea = new JTextArea(text);
+            jTextArea.setWrapStyleWord(true);
+            jTextArea.setLineWrap(true);
+            jTextArea.setFont(new Font("Arial", Font.PLAIN, 11));
+            jTextArea.setEditable(false);
+//            jTextArea.setBackground(jScrollPane.getBackground());
+            jTextArea.setOpaque(false);
+
+            DefaultCaret caret = (DefaultCaret) jTextArea.getCaret();
+            caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+
+            jScrollPane.setPreferredSize(new Dimension(0, 55));
+            jTextArea.setRows(jTextArea.getLineCount());
+            jTextArea.setBorder(null);
+            jScrollPane.setViewportView(jTextArea);
+        }
+
+        @Override
+        public String getValue() {
+            return jTextArea.getText();
+        }
+
+        @Override
+        public void setValue(String value) {
+            jTextArea.setText(value);
+        }
+
+        @Override
+        public JComponent getUi() {
+            return jScrollPane;
         }
     }
 
@@ -470,6 +534,7 @@ public class UserProperties extends Properties {
             };
 
             jTable.putClientProperty("terminateEditOnFocusLost", true);
+            ((DefaultTableCellRenderer) jTable.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
             jTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
 
@@ -553,6 +618,7 @@ public class UserProperties extends Properties {
             this.uiComponent = uiComponent;
             ui = uiComponent.getUi();
             ui.setOpaque(true);
+            ui.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             // ui.addActionListener(e -> fireEditingStopped());
         }
 
@@ -567,6 +633,7 @@ public class UserProperties extends Properties {
             }
 
             uiComponent.setValue(value);
+            ui.revalidate();
             return ui;
         }
 
@@ -580,11 +647,47 @@ public class UserProperties extends Properties {
                 ui.setBackground(UIManager.getColor("Button.background"));
             }
             uiComponent.setValue(value);
+            ui.revalidate();
             return ui;
         }
 
         public Object getCellEditorValue() {
             return uiComponent.getValue();
+        }
+    }
+
+    public static class PropertiesBuilder {
+        private Properties defaults;
+        private boolean promptForMissingProperties = true;
+        private List<PropertyDef> propertyDefs = new ArrayList<>();
+
+        public UserProperties fromFile(File file) {
+            return new UserProperties(
+                defaults,
+                file,
+                promptForMissingProperties,
+                propertyDefs
+            );
+        }
+
+        public PropertiesBuilder withDefaults(Properties properties) {
+            defaults = properties;
+            return this;
+        }
+
+        public PropertiesBuilder promptForMissingProperties(boolean promptForMissingProperties) {
+            this.promptForMissingProperties = promptForMissingProperties;
+            return this;
+        }
+
+        public PropertiesBuilder property(String name, String description) {
+            propertyDefs.add(new PropertyDef(name, description, false));
+            return this;
+        }
+
+        public PropertiesBuilder secretProperty(String name, String description) {
+            propertyDefs.add(new PropertyDef(name, description, true));
+            return this;
         }
     }
 }
