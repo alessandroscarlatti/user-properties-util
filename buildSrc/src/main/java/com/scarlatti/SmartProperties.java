@@ -1,15 +1,9 @@
 package com.scarlatti;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
@@ -376,45 +370,26 @@ public class SmartProperties extends Properties {
     }
 
     public static class SwTextField implements CellUiComp<String> {
-        private JTextField jTextField;
+        private JTextField jLabel;
 
         public SwTextField(String text) {
-            jTextField = new JTextField(text);
-
-            Border emptyBorder = new EmptyBorder(5, 5, 5, 5);
-            Border beveledBorder = BorderFactory.createSoftBevelBorder(BevelBorder.RAISED,
-                UIManager.getColor("Button.background"),
-                UIManager.getColor("Button.background")
-            );
-            Border combinedBorder = new CompoundBorder(emptyBorder, beveledBorder);
-            jTextField.setBorder(emptyBorder);
-
-            jTextField.addFocusListener(new FocusListener() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    jTextField.setBorder(combinedBorder);
-                }
-
-                @Override
-                public void focusLost(FocusEvent e) {
-                    jTextField.setBorder(emptyBorder);
-                }
-            });
+            jLabel = new JTextField(text);
+            jLabel.setBorder(null);
         }
 
         @Override
         public String getValue() {
-            return jTextField.getText();
+            return jLabel.getText();
         }
 
         @Override
         public void setValue(String value) {
-            jTextField.setText(value);
+            jLabel.setText(value);
         }
 
         @Override
         public JComponent getUi() {
-            return jTextField;
+            return jLabel;
         }
     }
 
@@ -423,7 +398,6 @@ public class SmartProperties extends Properties {
 
         public SwLabel(String text) {
             jLabel = new JLabel(text);
-            jLabel.setOpaque(true);
         }
 
         @Override
@@ -448,25 +422,7 @@ public class SmartProperties extends Properties {
 
         public SwPasswordField(String text) {
             jPasswordField = new JPasswordField(text);
-            Border emptyBorder = new EmptyBorder(5, 5, 5, 5);
-            Border beveledBorder = BorderFactory.createSoftBevelBorder(BevelBorder.RAISED,
-                UIManager.getColor("Button.background"),
-                UIManager.getColor("Button.background")
-            );
-            Border combinedBorder = new CompoundBorder(emptyBorder, beveledBorder);
-            jPasswordField.setBorder(emptyBorder);
-
-            jPasswordField.addFocusListener(new FocusListener() {
-                @Override
-                public void focusGained(FocusEvent e) {
-                    jPasswordField.setBorder(combinedBorder);
-                }
-
-                @Override
-                public void focusLost(FocusEvent e) {
-                    jPasswordField.setBorder(emptyBorder);
-                }
-            });
+            jPasswordField.setBorder(null);
         }
 
         @Override
@@ -486,7 +442,7 @@ public class SmartProperties extends Properties {
     }
 
     private static class SwTextArea implements CellUiComp<String> {
-        private JScrollPane jScrollPane;
+        private JScrollPane jScrollPane = new JScrollPane();
         private JTextArea jTextArea;
 
         public SwTextArea(String text) {
@@ -496,23 +452,14 @@ public class SmartProperties extends Properties {
             jTextArea.setFont(new Font("Arial", Font.PLAIN, 11));
             jTextArea.setEditable(false);
 //            jTextArea.setBackground(jScrollPane.getBackground());
-            jTextArea.setOpaque(true);
+            jTextArea.setOpaque(false);
 
             DefaultCaret caret = (DefaultCaret) jTextArea.getCaret();
             caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
-            jScrollPane = new JScrollPane() {
-                @Override
-                public void setBackground(Color bg) {
-                    super.setBackground(bg);
-                    jTextArea.setBackground(bg);
-                }
-            };
-
             jScrollPane.setPreferredSize(new Dimension(0, 55));
             jTextArea.setBorder(null);
             jScrollPane.setViewportView(jTextArea);
-            jScrollPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         }
 
         @Override
@@ -678,8 +625,8 @@ public class SmartProperties extends Properties {
             super(new JTextField());
             this.uiComponent = uiComponent;
             ui = uiComponent.getUi();
-//            ui.setOpaque(true);
-//            ui.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            ui.setOpaque(true);
+            ui.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             // ui.addActionListener(e -> fireEditingStopped());
         }
 

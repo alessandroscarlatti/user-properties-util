@@ -176,5 +176,6 @@ class SmartPropertiesTest {
                 .fromFile(file)
 
         properties.prop1 != null
+        println properties
     }
 }
