@@ -52,11 +52,11 @@ public class SmartProperties extends Properties {
     public SmartProperties() {
     }
 
-    public SmartProperties(String properties) {
-        load(properties);
+    public SmartProperties(Properties defaults) {
+        super(defaults);
     }
 
-    public SmartProperties(Properties defaults,
+    private SmartProperties(Properties defaults,
                            File file,
                            boolean promptForMissingProperties,
                            List<PropertyDef> propertyDefs) {
@@ -67,31 +67,9 @@ public class SmartProperties extends Properties {
         load(file);
     }
 
-    public SmartProperties(File file) {
-        load(file);
-    }
-
-    public SmartProperties(File file, Consumer<SmartProperties> config) {
-        config.accept(this);
-        load(file);
-    }
-
-    public SmartProperties(Properties defaults) {
-        super(defaults);
-    }
-
     public static PropertiesBuilder get() {
         PropertiesBuilder builder = new PropertiesBuilder();
         return builder;
-    }
-
-    public SmartProperties def(String name, String description, boolean secret) {
-        return def(new PropertyDef(name, description, secret));
-    }
-
-    public SmartProperties def(PropertyDef propertyDef) {
-        propertyDefs.add(propertyDef);
-        return this;
     }
 
     public void load(File file) {
@@ -587,7 +565,6 @@ public class SmartProperties extends Properties {
 
         public JComponent render() {
             jScrollPane.setViewportView(jTable);
-
             return jScrollPane;
         }
 
@@ -776,6 +753,11 @@ public class SmartProperties extends Properties {
 
         public PropertiesBuilder property(String name, String description) {
             propertyDefs.add(new PropertyDef(name, description, false));
+            return this;
+        }
+
+        public PropertiesBuilder property(String name, String description, boolean secret) {
+            propertyDefs.add(new PropertyDef(name, description, secret));
             return this;
         }
 

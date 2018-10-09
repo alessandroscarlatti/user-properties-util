@@ -1,5 +1,3 @@
-import com.scarlatti.SmartProperties
-
 apply plugin: 'groovy'
 apply plugin: 'idea'
 
@@ -16,14 +14,14 @@ task testMain(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     main = 'com.scarlatti.TestMain'
 
-    doFirst {
-        Properties props = SmartProperties.get()
-            .property("com.scarlatti.prop1", "prop1")
-            .property("com.scarlatti.prop2", "prop2")
-            .fromFile(file("${buildDir}/sandbox/com.scarlatti.properties"))
-
-        println props
-        systemProperty "com.scarlatti.prop1", props.getProperty("com.scarlatti.prop1")
-        systemProperty "com.scarlatti.prop2", props.getProperty("com.scarlatti.prop2")
-    }
+//    doFirst {
+//        Properties props = SmartProperties.get()
+//            .property("com.scarlatti.prop1", "prop1")
+//            .property("com.scarlatti.prop2", "prop2")
+//            .fromFile(file("${buildDir}/sandbox/com.scarlatti.properties"))
+//
+//        println props
+//        systemProperty "com.scarlatti.prop1", props.getProperty("com.scarlatti.prop1")
+//        systemProperty "com.scarlatti.prop2", props.getProperty("com.scarlatti.prop2")
+//    }
 }
