@@ -192,5 +192,6 @@ class SmartPropertiesTest {
 
         properties.prop1 != null
         println properties
+        SmartProperties.setDisplayBanner(true)
     }
 }
