@@ -6,8 +6,12 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.DefaultCaret;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -408,6 +412,8 @@ public class SmartProperties extends Properties {
                 @Override
                 public void focusLost(FocusEvent e) {
                     jTextField.setBorder(emptyBorder);
+                    jTextField.revalidate();
+                    jTextField.repaint();
                 }
             });
         }
@@ -476,6 +482,8 @@ public class SmartProperties extends Properties {
                 @Override
                 public void focusLost(FocusEvent e) {
                     jPasswordField.setBorder(emptyBorder);
+                    jPasswordField.revalidate();
+                    jPasswordField.repaint();
                 }
             });
         }
@@ -499,6 +507,7 @@ public class SmartProperties extends Properties {
     private static class SwTextArea implements CellUiComp<String> {
         private JScrollPane jScrollPane;
         private JTextArea jTextArea;
+        private Runnable onFocusLost;
 
         public SwTextArea(String text) {
             jTextArea = new JTextArea(text);
@@ -602,6 +611,28 @@ public class SmartProperties extends Properties {
                     int modelColumn = convertColumnIndexToModel(column);
                     return (TableCellRenderer) cellEditors.get(modelRow).get(modelColumn);
                 }
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return (column == 1);
+                }
+
+                @Override
+                public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+
+                    getCellEditor(rowIndex, columnIndex);
+
+                    super.changeSelection(rowIndex, columnIndex, toggle, extend);
+
+                    if (editCellAt(rowIndex,  columnIndex)) {
+                        Component editor = getEditorComponent();
+                        editor.requestFocusInWindow();
+
+                        if (editor instanceof JTextComponent) {
+                            ((JTextComponent) editor).selectAll();
+                        }
+                    }
+                }
             };
 
             jTable.putClientProperty("terminateEditOnFocusLost", true);
@@ -686,11 +717,9 @@ public class SmartProperties extends Properties {
 
         public CstmCompEditor(CellUiComp uiComponent) {
             super(new JTextField());
+            setClickCountToStart(1);
             this.uiComponent = uiComponent;
             ui = uiComponent.getUi();
-//            ui.setOpaque(true);
-//            ui.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            // ui.addActionListener(e -> fireEditingStopped());
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value,
