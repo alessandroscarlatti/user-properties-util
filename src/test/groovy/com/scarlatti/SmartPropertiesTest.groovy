@@ -180,4 +180,17 @@ class SmartPropertiesTest {
         properties.prop1 != null
         println properties
     }
+
+    @Test
+    void "get two properties without banner"() {
+        file.text = properties()
+        SmartProperties.setDisplayBanner(false)
+        Properties properties = SmartProperties.get()
+                .property("sys.test.username", "your username")
+                .secretProperty("sys.test.password", "your password")
+                .fromFile(file)
+
+        properties.prop1 != null
+        println properties
+    }
 }

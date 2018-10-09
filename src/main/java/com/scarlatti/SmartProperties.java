@@ -44,6 +44,7 @@ public class SmartProperties extends Properties {
     private List<PropertyDef> propertyDefs = new ArrayList<>();
     private boolean promptForMissingProperties = true;
     private File file;
+    private static boolean displayBanner = true;
 
     static {
         try {
@@ -61,9 +62,9 @@ public class SmartProperties extends Properties {
     }
 
     private SmartProperties(Properties defaults,
-                           File file,
-                           boolean promptForMissingProperties,
-                           List<PropertyDef> propertyDefs) {
+                            File file,
+                            boolean promptForMissingProperties,
+                            List<PropertyDef> propertyDefs) {
         super(defaults);
         this.file = file;
         this.promptForMissingProperties = promptForMissingProperties;
@@ -74,6 +75,14 @@ public class SmartProperties extends Properties {
     public static PropertiesBuilder get() {
         PropertiesBuilder builder = new PropertiesBuilder();
         return builder;
+    }
+
+    public static boolean getDisplayBanner() {
+        return displayBanner;
+    }
+
+    public static void setDisplayBanner(boolean displayBanner) {
+        SmartProperties.displayBanner = displayBanner;
     }
 
     public void load(File file) {
@@ -150,13 +159,24 @@ public class SmartProperties extends Properties {
 
         // build and show the dialog.
         EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
+        if (displayBanner) {
+            String banner =
+                "       _______________________\n" +
+                "      /   //=================/`\"-._\n" +
+                "     |   ||=================|      D\n" +
+                " jgs  \\___\\\\_________________\\__.-\"\n";
 
+            System.out.println();
+            System.out.println("Smart Properties...");
+            System.out.println(banner);
+            System.out.println();
+        }
         System.out.println("Missing some properties.  Look for a dialog.");
 
         JFrame frame = new JFrame("Edit Properties");
-        frame.setUndecorated( true );
-        frame.setVisible( true );
-        frame.setLocationRelativeTo( null );
+        frame.setUndecorated(true);
+        frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
         frame.setIconImages(getIcons());
 
         int response = JOptionPane.showOptionDialog(
@@ -507,7 +527,6 @@ public class SmartProperties extends Properties {
     private static class SwTextArea implements CellUiComp<String> {
         private JScrollPane jScrollPane;
         private JTextArea jTextArea;
-        private Runnable onFocusLost;
 
         public SwTextArea(String text) {
             jTextArea = new JTextArea(text);
@@ -515,7 +534,6 @@ public class SmartProperties extends Properties {
             jTextArea.setLineWrap(true);
             jTextArea.setFont(new Font("Arial", Font.PLAIN, 11));
             jTextArea.setEditable(false);
-//            jTextArea.setBackground(jScrollPane.getBackground());
             jTextArea.setOpaque(true);
 
             DefaultCaret caret = (DefaultCaret) jTextArea.getCaret();
@@ -559,8 +577,7 @@ public class SmartProperties extends Properties {
 
         public SwTable(Consumer<SwTable> config) {
             config.accept(this);
-            setupTableRendering();
-//            addData();
+            setupTable();
             updateRowHeights();
         }
 
@@ -577,7 +594,7 @@ public class SmartProperties extends Properties {
             return jScrollPane;
         }
 
-        private void setupTableRendering() {
+        private void setupTable() {
 
             Object[][] data = new Object[trs.size()][trs.size() == 0 ? 0 : trs.get(0).getTds().size()];
             List<List<DefaultCellEditor>> cellEditors = new ArrayList<>();
@@ -613,18 +630,9 @@ public class SmartProperties extends Properties {
                 }
 
                 @Override
-                public boolean isCellEditable(int row, int column) {
-                    return (column == 1);
-                }
-
-                @Override
                 public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
-
-                    getCellEditor(rowIndex, columnIndex);
-
                     super.changeSelection(rowIndex, columnIndex, toggle, extend);
-
-                    if (editCellAt(rowIndex,  columnIndex)) {
+                    if (editCellAt(rowIndex, columnIndex)) {
                         Component editor = getEditorComponent();
                         editor.requestFocusInWindow();
 
@@ -638,21 +646,6 @@ public class SmartProperties extends Properties {
             jTable.putClientProperty("terminateEditOnFocusLost", true);
             ((DefaultTableCellRenderer) jTable.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
             jTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        }
-
-        private void addData() {
-            for (Tr tr : trs) {
-                // this is the data for the row...
-                Object[] values = new Object[tr.tds.size()];
-
-                int clmIndex = 0;
-                for (Td td : tr.tds) {
-                    values[clmIndex] = td.ui.getValue();
-                    clmIndex++;
-                }
-
-                model.addRow(values);
-            }
         }
 
         private void updateRowHeights() {
@@ -720,6 +713,17 @@ public class SmartProperties extends Properties {
             setClickCountToStart(1);
             this.uiComponent = uiComponent;
             ui = uiComponent.getUi();
+
+            ui.addFocusListener(new FocusListener() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    fireEditingStopped();
+                }
+            });
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value,
@@ -745,6 +749,12 @@ public class SmartProperties extends Properties {
             } else {
                 ui.setForeground(table.getForeground());
                 ui.setBackground(UIManager.getColor("Button.background"));
+                if (ui instanceof JPasswordField) {
+                    ui.setBorder(new EmptyBorder(5, 5, 5, 5));
+                }
+                if (ui instanceof JTextField) {
+                    ui.setBorder(new EmptyBorder(5, 5, 5, 5));
+                }
             }
             uiComponent.setValue(value);
             ui.revalidate();
