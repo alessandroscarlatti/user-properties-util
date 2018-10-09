@@ -168,8 +168,14 @@ public class SmartProperties extends Properties {
         EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
 
         System.out.println("Missing some properties.  Look for a dialog.");
+
+        JFrame frame = new JFrame("Edit Properties");
+        frame.setUndecorated( true );
+        frame.setVisible( true );
+        frame.setLocationRelativeTo( null );
+
         int response = JOptionPane.showOptionDialog(
-            null,
+            frame,
             editPropertiesTable.render(),
             "Edit Properties",
             JOptionPane.OK_CANCEL_OPTION,
@@ -178,6 +184,7 @@ public class SmartProperties extends Properties {
             new Object[]{"OK", "Cancel"},
             "OK"
         );
+        frame.dispose();
 
         if (response == OK_OPTION) {
             properties = editPropertiesTable.getProperties();
@@ -423,6 +430,7 @@ public class SmartProperties extends Properties {
 
         public SwLabel(String text) {
             jLabel = new JLabel(text);
+            jLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
             jLabel.setOpaque(true);
         }
 
