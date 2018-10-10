@@ -32,7 +32,7 @@ public class Demo {
 ```
 
 You will be prompted to fill in your data the first time.
-Your data will be persisted and secret data will be obfuscated with Base64 encoding.
+Your data will be persisted in Java properties format in the file you choose, and secret data will be obfuscated with Base64 encoding.
 It will look something like this:
 
 !["Edit Properties" dialog](docs/images/edit.png)
