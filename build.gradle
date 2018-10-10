@@ -31,4 +31,6 @@ task testSmartPropertiesFromGradleIntoMain(type: JavaExec, group: "verification"
 task testMain(type: JavaExec, group: "verification") {
     classpath = sourceSets.test.runtimeClasspath
     main = 'com.scarlatti.Demo'
+
+//    systemProperty 'smartProperties.timeoutMs', 'asdf'
 }

@@ -52,12 +52,15 @@ public class SmartProperties extends Properties {
     static {
         try {
             boolean setLookAndFeel = true;
-            String prop = System.getProperty("com.scarlatti.SmartProperties.setLookAndFeel");
+            String prop = System.getProperty("smartProperties.setLookAndFeel");
             if (prop != null) {
                 setLookAndFeel = Boolean.parseBoolean(prop);
             }
             if (setLookAndFeel) {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                String lafClassName = UIManager.getSystemLookAndFeelClassName();
+                if (!UIManager.getLookAndFeel().getClass().getName().equals(lafClassName)) {
+                    UIManager.setLookAndFeel(lafClassName);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,23 +93,22 @@ public class SmartProperties extends Properties {
     }
 
     private void overrideWithSystemProperties() {
-        String displayBannerStr = System.getProperty("com.scarlatti.SmartProperties.displayBanner");
+        String displayBannerStr = System.getProperty("smartProperties.displayBanner");
         if (displayBannerStr != null) {
             this.displayBanner = Boolean.parseBoolean(displayBannerStr);
         }
 
-        String promptStr = System.getProperty("com.scarlatti.SmartProperties.promptForMissingProperties");
+        String promptStr = System.getProperty("smartProperties.promptForMissingProperties");
         if (promptStr != null) {
             this.promptForMissingProperties = Boolean.parseBoolean(promptStr);
         }
 
-        String timeoutStr = System.getProperty("com.scarlatti.SmartProperties.timeoutMs");
+        String timeoutStr = System.getProperty("smartProperties.timeoutMs");
         if (timeoutStr != null) {
             long timeoutMs = Long.parseLong(timeoutStr);
             if (timeoutMs < 0) {
-                System.out.println(timeoutMs + " not valid. Must be greater than or equal to 0");
-            }
-            else {
+                throw new IllegalArgumentException(timeoutMs + " not valid. smartProperties.timeoutMs should be greater than 0ms.");
+            } else {
                 this.timeoutMs = timeoutMs;
             }
         }
@@ -204,18 +206,19 @@ public class SmartProperties extends Properties {
         EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
         System.out.println("Missing some properties.  Look for a dialog.");
 
+        JFrame frame = new JFrame("Edit Properties");
+        frame.setUndecorated(true);
+        frame.setLocationRelativeTo(null);
+        frame.setIconImages(getIcons());
+        frame.setVisible(true);
+
+        JComponent table = editPropertiesTable.render();
+
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<Integer> responseFuture = executor.submit(() -> {
-
-            JFrame frame = new JFrame("Edit Properties");
-            frame.setUndecorated(true);
-            frame.setVisible(true);
-            frame.setLocationRelativeTo(null);
-            frame.setIconImages(getIcons());
-
             int dlgResponse = JOptionPane.showOptionDialog(
                 frame,
-                editPropertiesTable.render(),
+                table,
                 "Edit Properties",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
@@ -223,7 +226,6 @@ public class SmartProperties extends Properties {
                 new Object[]{"OK", "Cancel"},
                 "OK"
             );
-            frame.dispose();
             return dlgResponse;
         });
 
@@ -247,7 +249,11 @@ public class SmartProperties extends Properties {
         } catch (ExecutionException e) {
             new RuntimeException("Error editing properties with \"Edit Properties\" dialog.", e).printStackTrace();
         } catch (TimeoutException e) {
-            new RuntimeException("Timed out waiting " + timeoutMs + "ms for \"Edit Properties\" dialog.", e).printStackTrace();
+            responseFuture.cancel(true);
+            new IllegalStateException("Timed out waiting " + timeoutMs + "ms for \"Edit Properties\" dialog.", e).printStackTrace();
+        } finally {
+            executor.shutdown();
+            frame.dispose();
         }
     }
 
@@ -255,9 +261,9 @@ public class SmartProperties extends Properties {
         if (displayBanner) {
             String banner =
                 "      _______________________\n" +
-                "     /   //=================/`\"-._\n" +
-                "    |   ||=================|      D\n" +
-                "jgs  \\___\\\\_________________\\__.-\"";
+                    "     /   //=================/`\"-._\n" +
+                    "    |   ||=================|      D\n" +
+                    "jgs  \\___\\\\_________________\\__.-\"";
 
             System.out.println();
             System.out.println("      .:. Smart Properties .:.");
@@ -301,7 +307,7 @@ public class SmartProperties extends Properties {
     }
 
     public void store(File file) {
-        store(file, "Generated with SmartProperties.  Delete or edit this file to reset properties.");
+        store(file, "Generated with SmartProperties.  Delete or edit this file to reset.");
     }
 
     public void store(File file, String comments) {
