@@ -7,7 +7,7 @@ package com.scarlatti;
  * /_/ |_/_/\__/___/___/\_,_/_//_/\_,_/_/  \___/ /___/\__/\_,_/_/ /_/\_,_/\__/\__/_/
  * Monday, 10/8/2018
  */
-public class TestMain {
+public class TestMainFromGradle {
 
     public static void main(String[] args) {
         System.out.println("property prop1: " + System.getProperty("com.scarlatti.prop1"));

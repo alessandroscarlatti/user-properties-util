@@ -70,8 +70,8 @@ class SmartPropertiesTest {
         assert props2.getProperty("prop1") != props1.getProperty("prop1")
 
         Properties props3 = SmartProperties.get()
-            .secretProperty("prop1", "the first")
-            .fromFile(file)
+                .secretProperty("prop1", "the first")
+                .fromFile(file)
 
         assert props3.getProperty("prop1") != null
         assert props3.getProperty("prop1") == props1.getProperty("prop1")
@@ -92,12 +92,12 @@ class SmartPropertiesTest {
         file.text = properties()
 
         SmartProperties props1 = SmartProperties.get()
-            .property("prop1", "the first", false)
-            .property("prop2", "the second", false)
-            .property("prop3", "the password", true)
-            .property("prop4", "the password2", true)
-            .property("prop5", "the password3", true)
-            .fromFile(file)
+                .property("prop1", "the first", false)
+                .property("prop2", "the second", false)
+                .property("prop3", "the password", true)
+                .property("prop4", "the password2", true)
+                .property("prop5", "the password3", true)
+                .fromFile(file)
 
         println "done"
         props1.store(file)
@@ -106,12 +106,12 @@ class SmartPropertiesTest {
     @Test
     void "prompt for properties when file is empty"() {
         SmartProperties props1 = SmartProperties.get()
-            .property("prop1", "the first", false)
-            .property("prop2", "the second", false)
-            .property("prop3", "the password", true)
-            .property("prop4", "the password2", true)
-            .property("prop5", "the password3", true)
-            .fromFile(file)
+                .property("prop1", "the first", false)
+                .property("prop2", "the second", false)
+                .property("prop3", "the password", true)
+                .property("prop4", "the password2", true)
+                .property("prop5", "the password3", true)
+                .fromFile(file)
 
         println "done"
 //        props1.store(file)
@@ -127,26 +127,26 @@ class SmartPropertiesTest {
     void "use properties builder"() {
         file.text = properties()
         Properties properties = SmartProperties.get()
-            .property("prop1", "a very very very very very very long description very very very long description")
-            .property("prop2", "the short")
-            .property("prop3", "the remarkable property")
-            .property("prop5", "the remarkable property")
-            .property("prop6", "password for the ftp server (this is your long password) and it ")
-            .property("prop7", "the remarkable property")
-            .property("prop8", "the remarkable property")
-            .property("prop9", "the remarkable property")
-            .property("prop0", "the remarkable property")
-            .property("propq", "the remarkable property")
-            .property("prope", "an example json string for example: qwerlkj asdfjkqwe radfkj qwer asdf")
-            .property("propr", "the remarkable property")
-            .property("propt", "the remarkable property")
-            .property("propy", "the remarkable property")
-            .property("propu", "the remarkable property")
-            .property("propi", "the remarkable property")
-            .secretProperty("com.scarlatti.password", "the password")
-            .fromFile(file)
+                .property("prop1", "a very very very very very very long description very very very long description")
+                .property("prop2", "the short")
+                .property("prop3", "the remarkable property")
+                .property("prop5", "the remarkable property")
+                .property("prop6", "password for the ftp server (this is your long password) and it ")
+                .property("prop7", "the remarkable property")
+                .property("prop8", "the remarkable property")
+                .property("prop9", "the remarkable property")
+                .property("prop0", "the remarkable property")
+                .property("propq", "the remarkable property")
+                .property("prope", "an example json string for example: qwerlkj asdfjkqwe radfkj qwer asdf")
+                .property("propr", "the remarkable property")
+                .property("propt", "the remarkable property")
+                .property("propy", "the remarkable property")
+                .property("propu", "the remarkable property")
+                .property("propi", "the remarkable property")
+                .secretProperty("com.scarlatti.password", "the password")
+                .fromFile(file)
 
-        properties.prop1 != null
+        assert properties.prop1 != null
     }
 
     @Test
@@ -156,7 +156,7 @@ class SmartPropertiesTest {
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
 
-        properties.prop1 != null
+        assert properties.prop1 != null
     }
 
     @Test
@@ -166,7 +166,7 @@ class SmartPropertiesTest {
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
 
-        properties.prop1 != null
+        assert properties.prop1 != null
     }
 
     @Test
@@ -177,21 +177,44 @@ class SmartPropertiesTest {
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
 
-        properties.prop1 != null
+        assert properties."sys.test.username" != null
         println properties
     }
 
     @Test
     void "get two properties without banner"() {
         file.text = properties()
-        SmartProperties.setDisplayBanner(false)
+        Properties properties = SmartProperties.get()
+                .property("sys.test.username", "your username")
+                .secretProperty("sys.test.password", "your password")
+                .displayBanner()
+                .fromFile(file)
+
+        assert properties."sys.test.username" != null
+        println properties
+    }
+
+    @Test
+    void "quick timeout"() {
+        file.text = properties()
+        Properties properties = SmartProperties.get()
+                .property("sys.test.username", "your username")
+                .secretProperty("sys.test.password", "your password")
+                .timeoutMs(3000)
+                .fromFile(file)
+
+        assert properties."sys.test.username" == null
+        println properties
+    }
+
+    @Test
+    void "auto-timeout"() {
+        file.text = properties()
         Properties properties = SmartProperties.get()
                 .property("sys.test.username", "your username")
                 .secretProperty("sys.test.password", "your password")
                 .fromFile(file)
 
-        properties.prop1 != null
-        println properties
-        SmartProperties.setDisplayBanner(true)
+        assert properties.getProperty("sys.test.username") == null
     }
 }

@@ -18,8 +18,10 @@ import java.awt.event.FocusListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 import static java.util.Base64.getDecoder;
@@ -44,32 +46,59 @@ public class SmartProperties extends Properties {
     private List<PropertyDef> propertyDefs = new ArrayList<>();
     private boolean promptForMissingProperties = true;
     private File file;
-    private static boolean displayBanner = true;
+    private boolean displayBanner = true;
+    private long timeoutMs = 60000L;
 
     static {
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            boolean setLookAndFeel = true;
+            String prop = System.getProperty("com.scarlatti.SmartProperties.setLookAndFeel");
+            if (prop != null) {
+                setLookAndFeel = Boolean.parseBoolean(prop);
+            }
+            if (setLookAndFeel) {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public SmartProperties() {
+        overrideWithSystemProperties();
     }
 
     public SmartProperties(Properties defaults) {
         super(defaults);
+        overrideWithSystemProperties();
     }
 
     private SmartProperties(Properties defaults,
                             File file,
                             boolean promptForMissingProperties,
-                            List<PropertyDef> propertyDefs) {
+                            List<PropertyDef> propertyDefs,
+                            boolean displayBanner,
+                            long timeoutMs) {
         super(defaults);
         this.file = file;
         this.promptForMissingProperties = promptForMissingProperties;
         this.propertyDefs = propertyDefs;
+        this.displayBanner = displayBanner;
+        this.timeoutMs = timeoutMs;
+        overrideWithSystemProperties();
         load(file);
+    }
+
+    private void overrideWithSystemProperties() {
+        String displayBannerStr = System.getProperty("com.scarlatti.SmartProperties.displayBanner");
+        if (displayBannerStr != null) {
+            this.displayBanner = Boolean.parseBoolean(displayBannerStr);
+        }
+
+        String promptStr = System.getProperty("com.scarlatti.SmartProperties.promptForMissingProperties");
+        if (promptStr != null) {
+            this.promptForMissingProperties = Boolean.parseBoolean(promptStr);
+        }
     }
 
     public static PropertiesBuilder get() {
@@ -77,26 +106,28 @@ public class SmartProperties extends Properties {
         return builder;
     }
 
-    public static boolean getDisplayBanner() {
+    public boolean getDisplayBanner() {
         return displayBanner;
     }
 
-    public static void setDisplayBanner(boolean displayBanner) {
-        SmartProperties.displayBanner = displayBanner;
+    public void setDisplayBanner(boolean displayBanner) {
+        this.displayBanner = displayBanner;
     }
 
     public void load(File file) {
         Objects.requireNonNull(file, "File may not be null");
-
-        System.out.println("Reading properties from file " + file.getAbsolutePath() + " (delete this file to reset)");
-
         if (file.exists()) {
             // load from file
             try (FileInputStream fis = new FileInputStream(file)) {
                 this.file = file;
+
+                String message = "Reading properties from file " + file.getAbsolutePath() + " (delete this file to reset)";
+                optionallyDisplayBanner();
+                System.out.println(message);
                 load(fis);
+                System.out.println("Loaded SmartProperties from file " + file.getAbsolutePath());
             } catch (Exception e) {
-                throw new RuntimeException("Error loading properties from file " + file.getAbsolutePath(), e);
+                throw new RuntimeException("Error loading properties from file " + file.getAbsolutePath() + ".  You can delete the file if you want to reset.", e);
             }
         } else {
             // create an empty file
@@ -134,6 +165,7 @@ public class SmartProperties extends Properties {
 
     private void promptForMissingProperties() {
         if (!promptForMissingProperties) {
+            System.out.println("Not prompting for missing properties.");
             return;
         }
 
@@ -159,50 +191,68 @@ public class SmartProperties extends Properties {
 
         // build and show the dialog.
         EditPropertiesTable editPropertiesTable = new EditPropertiesTable(properties);
-        if (displayBanner) {
-            String banner =
-                "       _______________________\n" +
-                "      /   //=================/`\"-._\n" +
-                "     |   ||=================|      D\n" +
-                " jgs  \\___\\\\_________________\\__.-\"\n";
-
-            System.out.println();
-            System.out.println("Smart Properties...");
-            System.out.println(banner);
-            System.out.println();
-        }
         System.out.println("Missing some properties.  Look for a dialog.");
 
-        JFrame frame = new JFrame("Edit Properties");
-        frame.setUndecorated(true);
-        frame.setVisible(true);
-        frame.setLocationRelativeTo(null);
-        frame.setIconImages(getIcons());
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<Integer> responseFuture = executor.submit(() -> {
 
-        int response = JOptionPane.showOptionDialog(
-            frame,
-            editPropertiesTable.render(),
-            "Edit Properties",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.INFORMATION_MESSAGE,
-            new ImageIcon(getIcons().get(2)),
-            new Object[]{"OK", "Cancel"},
-            "OK"
-        );
-        frame.dispose();
+            JFrame frame = new JFrame("Edit Properties");
+            frame.setUndecorated(true);
+            frame.setVisible(true);
+            frame.setLocationRelativeTo(null);
+            frame.setIconImages(getIcons());
 
-        if (response == OK_OPTION) {
-            properties = editPropertiesTable.getProperties();
+            int dlgResponse = JOptionPane.showOptionDialog(
+                frame,
+                editPropertiesTable.render(),
+                "Edit Properties",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(getIcons().get(2)),
+                new Object[]{"OK", "Cancel"},
+                "OK"
+            );
+            frame.dispose();
+            return dlgResponse;
+        });
 
-            // update the properties...
-            for (PropertyUiData property : properties) {
-                setProperty(property.getPropertyDef().getName(), property.value);
+        try {
+            int response = responseFuture.get(timeoutMs, TimeUnit.MILLISECONDS);
+            if (response == OK_OPTION) {
+                properties = editPropertiesTable.getProperties();
+
+                // update the properties...
+                for (PropertyUiData property : properties) {
+                    setProperty(property.getPropertyDef().getName(), property.value);
+                }
+
+                // can we save the properties during load??
+                if (file != null) {
+                    store(file);
+                }
             }
+        } catch (InterruptedException e) {
+            new RuntimeException("Thread Interrupted while editing properties with \"Edit Properties\" dialog.", e).printStackTrace();
+        } catch (ExecutionException e) {
+            new RuntimeException("Error editing properties with \"Edit Properties\" dialog.", e).printStackTrace();
+        } catch (TimeoutException e) {
+            new RuntimeException("Timed out waiting " + timeoutMs + "ms for \"Edit Properties\" dialog.", e).printStackTrace();
+        }
+    }
 
-            // can we save the properties during load??
-            if (file != null) {
-                store(file);
-            }
+    private void optionallyDisplayBanner() {
+        if (displayBanner) {
+            String banner =
+                "      _______________________\n" +
+                "     /   //=================/`\"-._\n" +
+                "    |   ||=================|      D\n" +
+                "jgs  \\___\\\\_________________\\__.-\"";
+
+            System.out.println();
+            System.out.println("      .:. Smart Properties .:.");
+            System.out.println(banner);
+            System.out.println("...::::::::::::::::::::::::::::.......");
+            System.out.println();
         }
     }
 
@@ -240,7 +290,7 @@ public class SmartProperties extends Properties {
     }
 
     public void store(File file) {
-        store(file, "");
+        store(file, "Generated with SmartProperties.  Delete or edit this file to reset properties.");
     }
 
     public void store(File file, String comments) {
@@ -770,14 +820,25 @@ public class SmartProperties extends Properties {
         private Properties defaults;
         private boolean promptForMissingProperties = true;
         private List<PropertyDef> propertyDefs = new ArrayList<>();
+        private boolean displayBanner;
+        private long timeoutMs = 3000L;
+
+        private PropertiesBuilder() {
+        }
 
         public SmartProperties fromFile(File file) {
             return new SmartProperties(
                 defaults,
                 file,
                 promptForMissingProperties,
-                propertyDefs
+                propertyDefs,
+                displayBanner,
+                timeoutMs
             );
+        }
+
+        public SmartProperties fromFile(Path path) {
+            return fromFile(path.toFile());
         }
 
         public PropertiesBuilder withDefaults(Properties properties) {
@@ -787,6 +848,24 @@ public class SmartProperties extends Properties {
 
         public PropertiesBuilder promptForMissingProperties(boolean promptForMissingProperties) {
             this.promptForMissingProperties = promptForMissingProperties;
+            return this;
+        }
+
+        public PropertiesBuilder displayBanner() {
+            return withBanner(true);
+        }
+
+        public PropertiesBuilder noBanner() {
+            return withBanner(false);
+        }
+
+        public PropertiesBuilder timeoutMs(long timeoutMs) {
+            this.timeoutMs = timeoutMs;
+            return this;
+        }
+
+        public PropertiesBuilder withBanner(boolean displayBanner) {
+            this.displayBanner = displayBanner;
             return this;
         }
 

@@ -1,3 +1,5 @@
+import com.scarlatti.SmartProperties
+
 apply plugin: 'groovy'
 apply plugin: 'idea'
 
@@ -10,18 +12,23 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-task testMain(type: JavaExec) {
+task testSmartPropertiesFromGradleIntoMain(type: JavaExec, group: "verification") {
     classpath = sourceSets.test.runtimeClasspath
-    main = 'com.scarlatti.TestMain'
+    main = 'com.scarlatti.TestMainFromGradle'
 
-//    doFirst {
-//        Properties props = SmartProperties.get()
-//            .property("com.scarlatti.prop1", "prop1")
-//            .property("com.scarlatti.prop2", "prop2")
-//            .fromFile(file("${buildDir}/sandbox/com.scarlatti.properties"))
-//
-//        println props
-//        systemProperty "com.scarlatti.prop1", props.getProperty("com.scarlatti.prop1")
-//        systemProperty "com.scarlatti.prop2", props.getProperty("com.scarlatti.prop2")
-//    }
+    doFirst {
+        Properties props = SmartProperties.get()
+            .property("com.scarlatti.prop1", "prop1")
+            .secretProperty("com.scarlatti.prop2", "prop2")
+            .fromFile(file("${buildDir}/sandbox/com.scarlatti.properties"))
+
+        println props
+        systemProperty "com.scarlatti.prop1", props.getProperty("com.scarlatti.prop1")
+        systemProperty "com.scarlatti.prop2", props.getProperty("com.scarlatti.prop2")
+    }
+}
+
+task testMain(type: JavaExec, group: "verification") {
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'com.scarlatti.Demo'
 }
