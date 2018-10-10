@@ -10,7 +10,7 @@
 
 # Smart Properties
 
-Do you want to access variable (and potentially sensitive) data while running development tasks, but don't want to commit the data to your project?
+Do you want to access variable (and potentially sensitive) data while running development tasks, but don't want to commit the data to your team's project?
 
 ## Try Smart Properties.
 
@@ -84,7 +84,7 @@ Password is don'techopasswordsever
 ```
 
 ## Install
-Smart Properties is small (40KB) and has no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the source code](src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
+Smart Properties is small (40KB) and has no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the single source code file](src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
 
 ## Advanced
 
