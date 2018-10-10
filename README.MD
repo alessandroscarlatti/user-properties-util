@@ -75,8 +75,8 @@ The next time you run the program `SmartProperties` will load your data for you.
 jgs  \___\\_________________\__.-"
 ...::::::::::::::::::::::::::::.......
 
-Reading properties from file C:\Users\pc\IdeaProjects\user-properties-util\build\dev.properties (delete this file to reset)
-Loaded SmartProperties from file C:\Users\pc\IdeaProjects\user-properties-util\build\dev.properties
+Reading properties from file C:\Users\pc\project\build\dev.properties (delete this file to reset)
+Loaded SmartProperties from file C:\Users\pc\project\build\dev.properties
 Username is me
 Password is don'techopasswordsever
 ```
