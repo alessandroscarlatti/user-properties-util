@@ -82,7 +82,7 @@ Password is don'techopasswordsever
 ```
 
 ## Install
-Smart Properties is small (40KB) and requires no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the source code](blob/master/src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
+Smart Properties is small (40KB) and requires no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the source code](src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
 
 `SmartProperties#get()` returns a `SmartProperties` object, which is an instance of `java.util.Properties`, so it can be used just like you would any other `Properties` object.
 
