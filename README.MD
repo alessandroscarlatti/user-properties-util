@@ -81,5 +81,13 @@ Username is me
 Password is don'techopasswordsever
 ```
 
+`SmartProperties#get()` returns a `SmartProperties` object, which is an instance of `java.util.Properties`, so it can be used just like you would any other `Properties` object.
 
+Some global properties can be configured via Java System Properties; these will override any previously configured values.
+
+| Java System Property Name                                              | Value Type          | Default | Effect |
+|------------------------------------------------------------|---------------------|---------|--------|
+| com.scarlatti.SmartProperties.displayBanner                | boolean             | true    | Do or don't display the banner when reading properties.
+| com.scarlatti.SmartProperties.promptForMissingProperties   | boolean             | true    | Do or don't open the "Edit Properties" dialog when required properties are missing.
+| com.scarlatti.SmartProperties.timeoutMs                    | long (milliseconds) | 60000   | Automatically close the dialog box after waiting this many milleseconds.
 Banner based on artwork by [Joan Stark](https://asciiart.website/joan/www.geocities.com/SoHo/7373/indexjava.html).

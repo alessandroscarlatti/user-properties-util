@@ -99,6 +99,17 @@ public class SmartProperties extends Properties {
         if (promptStr != null) {
             this.promptForMissingProperties = Boolean.parseBoolean(promptStr);
         }
+
+        String timeoutStr = System.getProperty("com.scarlatti.SmartProperties.timeoutMs");
+        if (timeoutStr != null) {
+            long timeoutMs = Long.parseLong(timeoutStr);
+            if (timeoutMs < 0) {
+                System.out.println(timeoutMs + " not valid. Must be greater than or equal to 0");
+            }
+            else {
+                this.timeoutMs = timeoutMs;
+            }
+        }
     }
 
     public static PropertiesBuilder get() {
