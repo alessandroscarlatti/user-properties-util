@@ -820,8 +820,8 @@ public class SmartProperties extends Properties {
         private Properties defaults;
         private boolean promptForMissingProperties = true;
         private List<PropertyDef> propertyDefs = new ArrayList<>();
-        private boolean displayBanner;
-        private long timeoutMs = 3000L;
+        private boolean displayBanner = true;
+        private long timeoutMs = 60000L;
 
         private PropertiesBuilder() {
         }

@@ -31,7 +31,9 @@ public class Demo {
 }
 ```
 
-You will be prompted to fill in your data the first time.  Your data will be persisted and encrypted.  It will look something like this:
+You will be prompted to fill in your data the first time.
+Your data will be persisted and secret data will be obfuscated with Base64 encoding.
+It will look something like this:
 
 !["Edit Properties" dialog](docs/images/edit.png)
 
@@ -63,4 +65,21 @@ Username is me
 Password is don'techopasswordsever
 ```
 
-Banner based on artwork by Joan Stark of [asciiart.website](https://asciiart.website/joan/www.geocities.com/SoHo/7373/indexjava.html).
+The next time you run the program `SmartProperties` will load your data for you.
+
+```
+      .:. Smart Properties .:.
+      _______________________
+     /   //=================/`"-._
+    |   ||=================|      D
+jgs  \___\\_________________\__.-"
+...::::::::::::::::::::::::::::.......
+
+Reading properties from file C:\Users\pc\IdeaProjects\user-properties-util\build\dev.properties (delete this file to reset)
+Loaded SmartProperties from file C:\Users\pc\IdeaProjects\user-properties-util\build\dev.properties
+Username is me
+Password is don'techopasswordsever
+```
+
+
+Banner based on artwork by [Joan Stark](https://asciiart.website/joan/www.geocities.com/SoHo/7373/indexjava.html).

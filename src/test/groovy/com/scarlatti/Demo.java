@@ -18,7 +18,7 @@ public class Demo {
             .secretProperty("dev.password", "Your Super Secret Password")
             .fromFile(Paths.get("build/dev.properties"));
 
-        System.out.println("Username is " + props.getProperty("dev.prop1"));
+        System.out.println("Username is " + props.getProperty("dev.username"));
         System.out.println("Password is " + props.getProperty("dev.password"));
     }
 }
