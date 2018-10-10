@@ -96,7 +96,7 @@ Some global properties can be configured via Java System Properties; these will 
 |----------------------------------------------|---------------------|---------|--------|
 | smartProperties.displayBanner                | boolean             | true    | Do or don't display the banner when reading properties.
 | smartProperties.promptForMissingProperties   | boolean             | true    | Do or don't open the "Edit Properties" dialog when required properties are missing.
-| smartProperties.timeoutMs                    | long (milliseconds) | 60000   | Automatically close the dialog box after waiting this many milleseconds.
+| smartProperties.timeoutMs                    | long (milliseconds) | 60000   | Automatically close the "Edit Properties" dialog after waiting this many milleseconds.
 | smartProperties.setLookAndFeel               | boolean             | true    | When true configures JavaSwing to use System Look And Feel.
 
 Banner based on artwork by [Joan Stark](https://asciiart.website/joan/www.geocities.com/SoHo/7373/indexjava.html).
