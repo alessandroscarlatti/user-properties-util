@@ -16,6 +16,8 @@ Do you want to access variable (and potentially sensitive) data while running de
 
 Here is a simple demo:
 
+> Recommended installation: copy [the single source code file](src/main/java/com/scarlatti/SmartProperties.java?raw=true) into your project.
+
 ```java
 public class Demo {
 
@@ -82,11 +84,13 @@ Password is don'techopasswordsever
 ```
 
 ## Install
-Smart Properties is small (40KB) and requires no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the source code](src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
+Smart Properties is small (40KB) and has no dependencies.  It requires Java JRE 8+;  Recommended installation is to copy [the source code](src/main/java/com/scarlatti/SmartProperties.java?raw=true) directly into your project.
+
+## Advanced
 
 `SmartProperties#get()` returns a `SmartProperties` object, which is an instance of `java.util.Properties`, so it can be used just like you would any other `Properties` object.
 
-Some global properties can be configured via Java System Properties; these will override any previously configured values.
+Some global properties can be configured via Java System Properties; these will override any otherwise configured values.
 
 | Java System Property Name                    | Value Type          | Default | Effect |
 |----------------------------------------------|---------------------|---------|--------|
