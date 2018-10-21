@@ -129,13 +129,13 @@ public class SmartProperties extends Properties {
 
     public void load(File file) {
         Objects.requireNonNull(file, "File may not be null");
+        optionallyDisplayBanner();
         if (file.exists()) {
             // load from file
             try (FileInputStream fis = new FileInputStream(file)) {
                 this.file = file;
 
                 String message = "Reading properties from file " + file.getAbsolutePath() + " (delete this file to reset)";
-                optionallyDisplayBanner();
                 System.out.println(message);
                 load(fis);
                 System.out.println("Loaded SmartProperties from file " + file.getAbsolutePath());
@@ -146,6 +146,7 @@ public class SmartProperties extends Properties {
             // create an empty file
             try {
                 System.out.println(file.getAbsoluteFile() + " does not exist (creating file)");
+                Files.createDirectories(file.toPath().getParent());
                 Files.write(file.toPath(), "".getBytes());
                 promptForMissingProperties();
             } catch (IOException e) {
